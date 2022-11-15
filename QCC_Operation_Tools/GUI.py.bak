@@ -1,0 +1,122 @@
+# -*- coding: utf-8 -*-
+
+###########################################################################
+## Python code generated with wxFormBuilder (version 3.10.1-0-g8feb16b3)
+## http://www.wxformbuilder.org/
+##
+## PLEASE DO *NOT* EDIT THIS FILE!
+###########################################################################
+
+import wx
+import wx.xrc
+
+###########################################################################
+## Class MyFrame1
+###########################################################################
+
+class MyFrame1 ( wx.Frame ):
+
+	def __init__( self, parent ):
+		wx.Frame.__init__ ( self, parent, id = wx.ID_ANY, title = u"QCC Operation Tools", pos = wx.DefaultPosition, size = wx.Size( 447,450 ), style = wx.DEFAULT_FRAME_STYLE|wx.MAXIMIZE_BOX|wx.RESIZE_BORDER|wx.TAB_TRAVERSAL )
+
+		self.SetSizeHints( wx.DefaultSize, wx.DefaultSize )
+
+		gbSizer1 = wx.GridBagSizer( 0, 0 )
+		gbSizer1.SetFlexibleDirection( wx.BOTH )
+		gbSizer1.SetNonFlexibleGrowMode( wx.FLEX_GROWMODE_SPECIFIED )
+
+		m_choice2Choices = [ u"USBDBG100", u"USBDBG101", u"USBDBG102", u"USBDBG103", u"USBDBG104", u"USBDBG105", u"USBDBG106", u"USBDBG107", u"USBDBG108", u"USBDBG109" ]
+		self.m_choice2 = wx.Choice( self, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize, m_choice2Choices, 0 )
+		self.m_choice2.SetSelection( 0 )
+		gbSizer1.Add( self.m_choice2, wx.GBPosition( 0, 1 ), wx.GBSpan( 1, 2 ), wx.ALL, 5 )
+
+		self.stUSBDBG = wx.StaticText( self, wx.ID_ANY, u"USBDBG", wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.stUSBDBG.Wrap( -1 )
+
+		gbSizer1.Add( self.stUSBDBG, wx.GBPosition( 0, 0 ), wx.GBSpan( 1, 1 ), wx.ALL, 5 )
+
+		self.stOperation = wx.StaticText( self, wx.ID_ANY, u"Operation", wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.stOperation.Wrap( -1 )
+
+		gbSizer1.Add( self.stOperation, wx.GBPosition( 1, 0 ), wx.GBSpan( 1, 1 ), wx.ALL, 5 )
+
+		chOperationChoices = [ u"1. Brun", u"2. Read Device  Bdaddr", u"3. Write Device  Bdaddr", u"4. Read Device License key", u"5. Write Device License key" ]
+		self.chOperation = wx.Choice( self, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize, chOperationChoices, 0 )
+		self.chOperation.SetSelection( 0 )
+		gbSizer1.Add( self.chOperation, wx.GBPosition( 1, 1 ), wx.GBSpan( 1, 2 ), wx.ALL, 5 )
+
+		self.stContent = wx.StaticText( self, wx.ID_ANY, u"Content", wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.stContent.Wrap( -1 )
+
+		gbSizer1.Add( self.stContent, wx.GBPosition( 2, 0 ), wx.GBSpan( 1, 1 ), wx.ALL, 5 )
+
+		self.teContent = wx.TextCtrl( self, wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.Size( 330,-1 ), 0 )
+		gbSizer1.Add( self.teContent, wx.GBPosition( 2, 1 ), wx.GBSpan( 1, 2 ), wx.ALL, 5 )
+
+		self.teFilePath = wx.TextCtrl( self, wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.Size( 330,-1 ), 0 )
+		gbSizer1.Add( self.teFilePath, wx.GBPosition( 3, 1 ), wx.GBSpan( 1, 2 ), wx.ALL, 5 )
+
+		self.buFilePath = wx.Button( self, wx.ID_ANY, u"FilePath", wx.DefaultPosition, wx.DefaultSize, 0 )
+		gbSizer1.Add( self.buFilePath, wx.GBPosition( 3, 0 ), wx.GBSpan( 1, 1 ), wx.ALL, 5 )
+
+		self.buRun = wx.Button( self, wx.ID_ANY, u"Run", wx.DefaultPosition, wx.Size( 80,50 ), 0 )
+		self.buRun.SetFont( wx.Font( 20, wx.FONTFAMILY_ROMAN, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_NORMAL, False, wx.EmptyString ) )
+
+		gbSizer1.Add( self.buRun, wx.GBPosition( 4, 0 ), wx.GBSpan( 2, 1 ), wx.ALL, 1 )
+
+		self.stStatus = wx.StaticText( self, wx.ID_ANY, u"Status", wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.stStatus.Wrap( -1 )
+
+		gbSizer1.Add( self.stStatus, wx.GBPosition( 4, 1 ), wx.GBSpan( 1, 1 ), wx.ALL, 5 )
+
+		self.stConnect = wx.StaticText( self, wx.ID_ANY, u"Connect", wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.stConnect.Wrap( -1 )
+
+		gbSizer1.Add( self.stConnect, wx.GBPosition( 4, 2 ), wx.GBSpan( 1, 1 ), wx.ALL, 5 )
+
+		self.stProcess = wx.StaticText( self, wx.ID_ANY, u"Process", wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.stProcess.Wrap( -1 )
+
+		gbSizer1.Add( self.stProcess, wx.GBPosition( 5, 1 ), wx.GBSpan( 1, 1 ), wx.ALL, 5 )
+
+		self.gaRun = wx.Gauge( self, wx.ID_ANY, 100, wx.DefaultPosition, wx.Size( 275,-1 ), wx.GA_HORIZONTAL )
+		self.gaRun.SetValue( 0 )
+		gbSizer1.Add( self.gaRun, wx.GBPosition( 5, 2 ), wx.GBSpan( 1, 1 ), wx.ALL, 5 )
+
+		self.teShow = wx.TextCtrl( self, wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.Size( 420,180 ), 0 )
+		gbSizer1.Add( self.teShow, wx.GBPosition( 7, 0 ), wx.GBSpan( 3, 3 ), wx.ALL, 5 )
+
+
+		self.SetSizer( gbSizer1 )
+		self.Layout()
+		self.Show(True)
+
+		self.Centre( wx.BOTH )
+
+	def __del__( self ):
+		pass
+
+
+
+
+
+if __name__ == '__main__':
+  ex = wx.App() 
+  WX_GUI = MyFrame1(None) 
+  ex.MainLoop()
+
+
+#   # -*- coding: utf-8 -*-
+# import wx
+# import subprocess
+# import thread  
+# from six import with_metaclass
+# from QCC_Blue_Tools.wx_GUI import MyFrame1
+
+
+# if __name__ == '__main__':
+#   filename = r"C:\Users\Jaden\Desktop\test\TestTool\CSR_Blue_Tools\LR_Receiver_20170323.xpv"
+#   ex = wx.App() 
+#   WX_GUI = MyFrame1(None) 
+# #  thread.start_new_thread(WX_GUI.gauge_process,(filename,))
+#   ex.MainLoop()

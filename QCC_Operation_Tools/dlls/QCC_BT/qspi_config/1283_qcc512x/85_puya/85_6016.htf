@@ -1,0 +1,27 @@
+# Copyright (c) 2018 Qualcomm Technologies International, Ltd.
+# All Rights Reserved.
+# Qualcomm Technologies International, Ltd. Confidential and Proprietary.
+
+
+
+# Puya P25Q32L / P25Q32LE
+# The maximum supported clock rate for P25Q32L parts is 62.5MHz.
+# Using this configuration to support P25Q32L parts requires the SqifClockControl
+# MIB key to be configured for 32MHz XTAL clock source.
+#
+# P25Q32LE parts do not impose a clock restriction, however, the 80MHz PLL clock
+# source may only be used after analysis of board layout and total load capacitance
+# proves that timing constraints can be met. Seek guidance from Qualcomm before 
+# considering use of the 80MHz clock source for P25Q32LE parts.
+
+QSPIFRAMLUTBaseParams = [00 85 60 16 08 00 01 20 00]
+QSPIFRAMLUTSPIReadParams = [00 03 01]
+QSPIFRAMLUTSPIConfVector =  [00 06 02 01 50 02 31 02]
+QSPIFRAMLUTFastConfVector =  [00 06 02 01 50 02 31 02]
+QSPIFRAMLUTWriteCmds =  [00 02 06]
+QSPIFRAMLUTEraseCmds = [00 d8 60]
+QSPIFRAMLUTStatusReadParams = [00 01 01 02 01]
+QSPIFRAMLUTStatusReadVector = [00 03 01 01 05]
+QSPIFRAMLUTDPDCmds = [00 b9 ab]
+QSPIFRAMLUTFastReadParams = [00 03 eb 00 04]
+QSPIFRAMLUTResetVector = [00 05 02 01 66 01 99]

@@ -1,0 +1,288 @@
+# -*- coding: utf-8 -*-
+import os
+import time
+import re
+import binascii
+import ctypes
+import ctypes.wintypes
+import struct
+import sys
+
+#from ModuleTest_Tool.helpers import Singleton, AppError
+from helpers import Singleton, AppError
+
+retVal_dict = {-1 : 'Invalid handle', 0:'Error', 1:'Success', 2:'Unsupported function'}
+
+# Defines the protocol to be used when setting up the communication with the device
+BCSP = 1  
+USB = 2  
+H4 = 4  
+H5 = 8  
+H4DS = 16  
+PTAP = 64  
+TRB = 128  
+USBDBG = 256  
+
+
+# Defines the key specifier
+KEY_XTAL_FREQ_TRIM = "curator15:XtalFreqTrim"
+KEY_BD_ADDRESS = "bt3:BD_ADDRESS"
+KEY_DEVICE_NAME = "app3:DeviceName"
+
+class QCCAPIError(AppError):
+    pass
+
+#class SLABHIDDevice(with_metaclass(Singleton, object)):
+class QCCUSBDevice():
+
+    def __init__(self):
+        self.qccLib = self.__getLib()
+        self.usbHandle = 0
+        self.comHandle = 0
+        self.refport = 0
+        self.dutport = 0
+
+    def __getLib(self):
+
+        # _environ = dict(os.environ)
+        # _DIRNAME = os.path.dirname(os.path.abspath(__file__))
+        # dll_path = os.path.join(_DIRNAME, "dlls", "QCC_BT")
+        # os.environ['PATH'] += os.pathsep + dll_path
+        # # print (os.environ['PATH'])
+        # _dll = ctypes.windll.LoadLibrary("TestEngine.dll")
+        # print ("load library passed")
+        # os.environ.clear()
+        # os.environ.update(_environ)  
+
+        _DIRNAME = os.path.dirname(os.path.abspath(sys.modules['__main__'].__file__))
+        exe_path = os.path.join(_DIRNAME, "QCC_Blue_Tools", "dlls", "QCC_BT","TestEngine.dll")
+        print(exe_path)
+        _dll = ctypes.windll.LoadLibrary(exe_path)
+        print ("load library passed")
+
+        return _dll
+
+    #def _convert_str(self, buffer, length):
+    #    return ''.join(map(chr, buffer[:length]))
+    
+    def openTestEngineUSB(self,DebugPort):
+        transport_INT32 = ctypes.wintypes.DWORD(USBDBG) #USB transport
+        transportDevice_STR = DebugPort
+        
+        dataRate_UNIT32 = ctypes.wintypes.DWORD(0) # baud rate
+        retryTimeOut_UNIT32 = ctypes.wintypes.DWORD(5000) #5000 ms
+        usbTimeOut_INT32 = ctypes.wintypes.DWORD(1000) #1000ms
+
+        self.usbHandle = self.qccLib.openTestEngine(transport_INT32, transportDevice_STR, dataRate_UNIT32, retryTimeOut_UNIT32, usbTimeOut_INT32)
+        if self.usbHandle == 0:  #try one more time
+            print ("Try one more time...")
+            time.sleep(2)
+            self.usbHandle = self.qccLib.openTestEngine(transport_INT32, transportDevice_STR, dataRate_UNIT32, retryTimeOut_UNIT32, usbTimeOut_INT32)
+            if self.usbHandle == 0:
+                print("openTestEngineUSB call failed")
+                return False
+        else:
+            print ("Test engine at sucessfully opened.")
+            return True
+  
+    def closeTestEngine(self, deviceHandle):
+        if deviceHandle != 0:
+            value = self.qccLib.closeTestEngine(deviceHandle)
+            if value != 1:
+                print("closeTestEngine call failed")
+                return False
+
+            print ("Test engine at sucessfully close.")
+            return True
+
+    def teConfigCacheInit(self, deviceHandle, configDb):
+        configFile = configDb
+        retVal = self.qccLib.teConfigCacheInit(deviceHandle, configFile)
+        if retVal != 1:
+            print("ConfigCacheInit failed!")
+            return False
+
+        return True
+
+    def teConfigCacheRead(self, deviceHandle):
+        pathFile = None
+        reserved_UINT16 = ctypes.wintypes.WORD(0)
+        retVal = self.qccLib.teConfigCacheRead(deviceHandle, pathFile, reserved_UINT16)
+        if retVal != 1:
+            print("ConfigCacheRead failed!")
+            return False
+
+        return True
+
+    def teConfigCacheWrite(self, deviceHandle):
+        pathFile = None
+        reserved_UINT16 = ctypes.wintypes.WORD(0)
+        retVal = self.qccLib.teConfigCacheWrite(deviceHandle, pathFile, reserved_UINT16)
+        if retVal != 1:
+            print("ConfigCacheWrite call failed")
+            return False
+
+        return True
+
+    def teConfigCacheWriteItem(self, deviceHandle,key,value):
+        retVal = self.qccLib.teConfigCacheWriteItem(deviceHandle, key,value)
+        if retVal != 1:
+            print("TeConfigCacheWriteItem call failed")
+            return False
+
+        return True
+            
+
+    def teConfigCacheReadItem(self, deviceHandle,key):
+            value = []
+            maxLen_UINT32 = ctypes.wintypes.DWORD(128)
+            value_arry = (ctypes.c_char*128)()
+            retVal = self.qccLib.teConfigCacheReadItem(deviceHandle, key, value_arry, ctypes.byref(maxLen_UINT32))
+            if retVal != 1:
+                print("TeConfigCacheReadItem call failed")
+                return 0
+            for item in range(0,128):
+                value.append(value_arry[item])
+            return value
+
+    def teConfigCacheMerge(self, deviceHandle,file):
+        pathFile = file
+        retVal = self.qccLib.teConfigCacheMerge(deviceHandle, pathFile)
+        if retVal != 1:
+            print("teConfigCacheMerge call failed")
+            return False
+
+        return True
+
+    def teAppDisable(self, deviceHandle):
+        reserved_UINT16 = ctypes.wintypes.WORD(0)
+        retVal = self.qccLib.teAppDisable(deviceHandle, reserved_UINT16)
+        if retVal != 1:
+            print("teAppDisable call failed")  
+            return False
+
+        return True
+
+    def teRadTxCwStart(self, deviceHandle,channel,power):
+        channel_UINT8 = ctypes.wintypes.BYTE(channel)
+        power_UINT8 = ctypes.wintypes.BYTE(power)
+        retVal = self.qccLib.teRadTxCwStart(deviceHandle, channel_UINT8,power_UINT8)
+        if retVal != 1:
+            print("teRadTxCwStart call failed")        
+            return False
+            
+        return True
+
+    def teRadStop(self,deviceHandle):
+        retVal = self.qccLib.teRadStop(deviceHandle)
+        if retVal != 1:
+            print("teRadTxCwStart call failed")  
+            return False
+            
+        return True
+
+    def teWriteBdAddr(self,deviceHandle,CFG_DB_PARAM,address):
+            formatAddress = "[ "+ address[10:12]+" "+address[8:10]+" "+address[6:8]+" "+address[4:6]+" "+address[2:4]+" "+address[0:2]+" ]"
+            self.teConfigCacheInit(deviceHandle,CFG_DB_PARAM)
+            self.teConfigCacheRead(deviceHandle)
+            self.teConfigCacheWriteItem(deviceHandle,KEY_BD_ADDRESS,formatAddress) 
+            self.teConfigCacheWrite(deviceHandle)
+
+    def teReadBdAddr(self,deviceHandle,CFG_DB_PARAM):
+            self.teConfigCacheInit(deviceHandle,CFG_DB_PARAM)
+            self.teConfigCacheRead(deviceHandle)
+            address = self.teConfigCacheReadItem(deviceHandle,KEY_BD_ADDRESS) 
+            self.teConfigCacheWrite(deviceHandle)
+            address = ''.join(address)
+            address = address.replace(" ","")
+            address = address.replace("[","")
+            address = address.replace("]","")
+            address = address.rstrip("\x00")
+            address = address.replace("\"","")
+            formatAddress = address[10:12]+address[8:10]+address[6:8]+address[4:6]+address[2:4]+address[0:2]
+            return str(formatAddress)
+
+    def setDeviceName(self,deviceHandle,CFG_DB_PARAM,name):
+            name = "\""+name +"\""
+            self.teConfigCacheInit(deviceHandle,CFG_DB_PARAM)
+            self.teConfigCacheRead(deviceHandle)
+            self.teConfigCacheWriteItem(deviceHandle,KEY_DEVICE_NAME,name) 
+            self.teConfigCacheWrite(deviceHandle)
+
+    def getDeviceName(self,deviceHandle,CFG_DB_PARAM):
+            self.teConfigCacheInit(deviceHandle,CFG_DB_PARAM)
+            self.teConfigCacheRead(deviceHandle)
+            device_name = self.teConfigCacheReadItem(deviceHandle,KEY_DEVICE_NAME) 
+            self.teConfigCacheWrite(deviceHandle)
+            device_name = ''.join(device_name)
+            device_name = device_name.rstrip("\x00")
+            device_name = device_name.replace("\"","")
+            return device_name
+
+    #Set RX device to continuous receive
+    def teRadRxPktCfg(self,deviceHandle,numPkts):
+        numPkts_UINT16 = ctypes.wintypes.WORD(numPkts)
+        retVal = self.qccLib.teRadRxPktCfg(deviceHandle,numPkts_UINT16)
+        if retVal != 1:
+            print("teRadRxPktCfg call failed")  
+            return False
+            
+        return True
+
+    def teRadRxPktStart(self,deviceHandle,channels,payload,pktType,bdAddr,hopMode,pktLen,ltAddr):
+        payload_UINT8 = ctypes.wintypes.BYTE(payload)
+        pktType_UINT8 = ctypes.wintypes.BYTE(pktType)
+        hopMode_UINT8 = ctypes.wintypes.BYTE(hopMode)
+        pktLen_UINT16 = ctypes.wintypes.WORD(pktLen)
+        ltAddr_UINT8 = ctypes.wintypes.BYTE(ltAddr)      
+        reserved_UINT32 = ctypes.wintypes.DWORD(0) 
+       
+        channels_UINT8 = (ctypes.wintypes.BYTE * 1)()
+        #print dataArray
+        for item in range (0, 1):
+            channels_UINT8[item] = ctypes.wintypes.BYTE(channels[item])
+
+        retVal = self.qccLib.teRadRxPktStart(deviceHandle,channels_UINT8,payload_UINT8,pktType_UINT8,bdAddr,hopMode_UINT8,pktLen_UINT16,ltAddr_UINT8,reserved_UINT32)
+        if retVal != 1:
+            print("teRadRxPktStart call failed")  
+            return False
+            
+        return True
+
+
+if __name__ == "__main__":
+    import os
+    import random
+
+    CFG_DB_PARAM  = "hydracore_config.sdb:QCC515X_CONFIG"
+    KEY_READ_BUFFER_LEN = ctypes.wintypes.DWORD(0)
+
+    ports = ['100','101','102','103','104','105','106']
+    qccusb = QCCUSBDevice()
+    for i in ports:
+        print(i)
+        qccusb.openTestEngineUSB(i)
+
+        qccusb.teWriteBdAddr(qccusb.usbHandle,CFG_DB_PARAM,"123456789012")
+
+        # qccusb.teConfigCacheInit(qccusb.usbHandle,CFG_DB_PARAM)
+        # qccusb.teConfigCacheRead(qccusb.usbHandle)
+        
+        # #qccusb.teConfigCacheMerge(qccusb.usbHandle,"E:\\Work_File\\Software\\QCC_test\\dlls\\QCC_BT\\Mib.txt")
+        # qccusb.teConfigCacheWriteItem(qccusb.usbHandle,KEY_XTAL_FREQ_TRIM, "5")
+
+        # qccusb.teConfigCacheWriteItem(qccusb.usbHandle,KEY_BD_ADDRESS,"[ 00 11 22 33 aa bb]" ) 
+        # qccusb.teConfigCacheWriteItem(qccusb.usbHandle,KEY_DEVICE_NAME,"\"QCC302X-Self_Left_v01\"" )   
+
+        # qccusb.teConfigCacheReadItem(qccusb.usbHandle,KEY_BD_ADDRESS) 
+        # qccusb.teConfigCacheReadItem(qccusb.usbHandle,KEY_DEVICE_NAME) 
+
+        # qccusb.teConfigCacheWrite(qccusb.usbHandle)
+
+        # qccusb.teAppDisable(qccusb.usbHandle)
+        # qccusb.teRadTxCwStart(qccusb.usbHandle,39,6)
+
+        # qccusb.teRadStop(qccusb.usbHandle)
+
+        qccusb.closeTestEngine(qccusb.usbHandle)
+        print("success!")

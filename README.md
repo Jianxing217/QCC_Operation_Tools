@@ -1,2 +1,3 @@
 # QCC_Operation_Tools
-QCC chip common operation tools
+v0.0.1
+- QCC_Operation_Tools initial version

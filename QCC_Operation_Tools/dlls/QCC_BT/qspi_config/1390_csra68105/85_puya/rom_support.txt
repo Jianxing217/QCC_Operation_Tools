@@ -1,0 +1,17 @@
+Copyright (c) 2018 Qualcomm Technologies International, Ltd.
+All Rights Reserved.
+Qualcomm Technologies International, Ltd. Confidential and Proprietary.
+
+
+
+MIB keys are required to support Puya parts on CSRA68105 devices. There are
+no Puya QSPI parts with ROM support on CSRA68105.
+
+
+The following QSPI parts can not be supported at all due to issues with erase/program
+suspend/resume implementation:
+
+Puya P25Q80L
+Puya P25Q80LE
+Puya P25Q16L
+Puya P25Q16LE

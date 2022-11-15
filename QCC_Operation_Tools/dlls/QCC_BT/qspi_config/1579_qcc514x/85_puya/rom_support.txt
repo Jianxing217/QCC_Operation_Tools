@@ -1,0 +1,31 @@
+Copyright (c) 2018 Qualcomm Technologies International, Ltd.
+All Rights Reserved.
+Qualcomm Technologies International, Ltd. Confidential and Proprietary.
+
+
+
+The following devices have ROM support and do not need MIB keys:
+
+Puya P25Q32L(*)
+Puya P25Q32LE
+Puya P25Q64L(*)
+Puya P25Q64LE
+
+Note: QSPI parts marked with (*) cannot perform quad reads at 80MHz. On CSRA68105 devices,
+      the 80 or 120MHz clock source is divided by 2. QCC512x and QCC514x devices do
+      not use the clock divider and therefore the SqifClockControl MIB key must be
+      configured such that these QSPI parts use the 32MHz crystal clock source.
+      
+      QSPI Parts without this marking do not impose a clock restriction, however, on QCC512x
+      devices, the 80MHz PLL clock source may only be used after analysis of board layout and 
+      total load capacitance proves that timing constraints can be met. Seek guidance from 
+      Qualcomm before considering use of the 80MHz clock source for these parts.
+
+
+The following QSPI parts can not be supported at all due to issues with erase/program
+suspend/resume implementation:
+
+Puya P25Q80L
+Puya P25Q80LE
+Puya P25Q16L
+Puya P25Q16LE

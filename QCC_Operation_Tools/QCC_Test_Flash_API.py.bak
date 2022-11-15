@@ -1,0 +1,430 @@
+# -*- coding: utf-8 -*-
+from six import with_metaclass
+from ctypes import *
+import ctypes.wintypes
+import os
+import time
+import re
+import struct
+#from ModuleTest_Tool.helpers import Singleton, AppError
+from helpers import Singleton, AppError
+import sys
+#
+# CSR error class
+#
+class QCCFlashAPIError(AppError):
+    pass
+    
+#class SLABHIDDevice(with_metaclass(Singleton, object)):
+class QCCFlashSPIDevice(with_metaclass(Singleton, object)):
+
+    def __init__(self):
+        self.qccLib = self.__getLib()
+
+    def __getLib(self):
+        # if __name__ == "__main__":
+        #      _environ = dict(os.environ)
+        #      _DIRNAME = os.path.dirname(os.path.abspath(__file__))
+        #      dll_path = os.path.join(_DIRNAME, "dlls", "QCC_BT")
+        #      os.environ['PATH'] += os.pathsep + dll_path
+        #      #print (os.environ['PATH'])
+        #      _dll = ctypes.windll.LoadLibrary("TestFlash.dll")
+        #      print ("load library passed")
+        #      os.environ.clear()
+        #      os.environ.update(_environ)        
+        # else :
+        #     _environ = dict(os.environ)
+        #     _DIRNAME = os.path.dirname(os.path.abspath(__file__))
+        #     dll_path = os.path.join(_DIRNAME, "dlls", "QCC_BT")
+        #     os.environ['PATH'] += os.pathsep + dll_path
+        #     _dll = ctypes.windll.LoadLibrary("TestFlash.dll")
+        #     print ("TestFlash.dll loaded successfully")
+        #     os.environ.clear()
+        #     os.environ.update(_environ)
+
+        _DIRNAME = os.path.dirname(os.path.abspath(__file__))
+        exe_path = os.path.join(_DIRNAME,"dlls", "QCC_BT","TestFlash.dll")
+        print(exe_path)
+        _dll = ctypes.windll.LoadLibrary(exe_path)
+        print ("load library passed")
+
+        return _dll
+#---------------------------------------------------------------------------------
+    def flmGetAvailableSpiPorts(self):
+        bufSize = struct.pack('<H', 500)
+        portsBuf = "\0" * 500  #reserve a buffer size of 100 characters
+        transBuf = "\0" * 500
+        numPortFound = struct.pack('<H', 0)
+
+        self.flmGetAvailableSpiPortsStatus = self.qccLib.flmGetAvailableSpiPorts(ctypes.c_char_p(bufSize),ctypes.c_char_p(portsBuf),ctypes.c_char_p(transBuf),ctypes.c_char_p(numPortFound))
+        if self.flmGetAvailableSpiPortsStatus == 0:
+
+            # print portsBuf
+            # print transBuf
+            # print struct.unpack('<H', numPortFound)[0]
+            # print numPortFound[1]
+            return portsBuf,transBuf,struct.unpack('<H', numPortFound)[0]
+        else:
+            print ("flmGetAvailableSpiPortsStatus error ")
+            print self.flmGetAvailableSpiPortsStatus
+
+            return(" "," ",0)
+
+            
+    def flmOpen(self,deviceMaskNumber):
+        number = 0
+        for i in range(deviceMaskNumber):
+            add = 0x01 << i
+            number = add + number
+        deviceMask = ctypes.wintypes.DWORD(number)
+        xtal = ctypes.wintypes.DWORD(26)
+        # TFL_SPI_LPT  1  
+        # TFL_SPI_USB  2  
+        # TFL_TRB  3  
+        # TFL_USBDBG  4  
+        transport = ctypes.wintypes.DWORD(4)
+
+        self.flmOpenState = self.qccLib.flmOpen(deviceMask,xtal,transport)
+        if self.flmOpenState == 0:
+            print ("Test Flash sucessfully opened.")
+            return True
+        else:
+            return False
+            print ("Test Flash cannot be opened successfully")
+
+    def flmReadProgramFiles(self,filename):
+        fn = ctypes.c_char_p(filename)
+        print fn 
+        ResdFilesState = self.qccLib.flmReadProgramFiles(fn)
+        if ResdFilesState == 0:
+            print ("Read file sccessfully.")
+            return True
+        else:
+            return False
+            print ("Cannot read file successfully")
+
+
+    def flmProgramSpawn(self,deviceMaskNumber):
+        number = 0
+        for i in range(deviceMaskNumber):
+            add = 0x01 << i
+            number = add + number
+        deviceMask = ctypes.wintypes.DWORD(number)
+        eraseFirst  = ctypes.wintypes.BYTE(1)
+        verifyAfter = ctypes.wintypes.BYTE(1)
+        restartAfter = ctypes.wintypes.BYTE(0)
+        ProgramSpawnState = self.qccLib.flmProgramSpawn(deviceMask,eraseFirst,verifyAfter,restartAfter)
+        if ProgramSpawnState == 0:
+            print ("ProgramSpawnState sccessfully.")
+            return True
+        else:
+            return False
+            print ("ProgramSpawnState faild.")
+
+
+    def flmGetDeviceProgress(self,devicenumber):
+        device = ctypes.wintypes.DWORD(devicenumber)
+        ProgressState = self.qccLib.flmGetDeviceProgress(device)
+        return ProgressState
+
+    def flmGetLastError(self):
+        #One of the codes as follows: FLASH_ERROR_NONE  0  
+        # FLASH_ERROR_DOWNLOAD_FAILED  1  
+        # FLASH_ERROR_VERIFY_FAILED  2  
+        # FLASH_ERROR_TIMED_OUT  3  
+        # FLASH_ERROR_CRC_FAILED  4  
+        # FLASH_ERROR_READBACK_FAILED  5  
+        # FLASH_ERROR_COULD_NOT_DOWNLOAD_PROG  6  
+        # FLASH_ERROR_COULD_NOT_STOP_XAP  7  
+        # FLASH_ERROR_BOOT_PROG_HALTED  8  
+        # FLASH_ERROR_ERASE_FAILED  9  
+        # FLASH_ERROR_XAP_ERROR  10  
+        # FLASH_ERROR_UNKNOWN_CHIP_TYPE  11  
+        # FLASH_ERROR_BROADCAST_MIXED_CHIP_TYPES  12  
+        # FLASH_ERROR_OPEN_FILE  13  
+        # FLASH_ERROR_NO_IMAGE  14  
+        # FLASH_ERROR_BUSY  15  
+        # FLASH_ERROR_NO_FLASH  16  
+        # FLASH_ERROR_OOM (out of memory)  17  
+        # TFL_ERROR_OPEN_FAILED  4097  
+        # TFL_ERROR_DEVICE_OPEN  4098  
+        # TFL_ERROR_DEVICE_NOT_OPEN  4099  
+        # TFL_ERROR_DEVICE_BUSY  4100  
+        # TFL_ERROR_THREAD_ERROR  4101  
+        # TFL_ERROR_RESET_FAIL  4102  
+        # TFL_ERROR_XTAL_INVALID  4103  
+        ErrorState = self.qccLib.flmGetLastError()
+        return ErrorState
+
+    def flmClose(self,deviceMaskNumber):
+        number = 0
+        for i in range(deviceMaskNumber):
+            add = 0x01 << i
+            number = add + number
+        deviceMask = ctypes.wintypes.DWORD(number)
+        CloseState = self.qccLib.flmClose(deviceMask)
+
+    def flmGetBitErrorField(self):
+        Error_number = self.qccLib.flmGetBitErrorField()
+        return Error_number
+
+    def flmGetDeviceError(self,devicenumber):
+        device = ctypes.wintypes.DWORD(devicenumber)
+        ErrorState = self.qccLib.flmGetDeviceError(device)
+        return ErrorState
+
+    def flmResetAndStart(self,deviceMaskNumber):
+        number = 0
+        for i in range(deviceMaskNumber):
+            add = 0x01 << i
+            number = add + number
+        deviceMask = ctypes.wintypes.DWORD(number)
+        #CloseState = self.qccLib.flmClose(deviceMask)
+        #deviceMask = ctypes.wintypes.DWORD(3)
+        reset = self.qccLib.flmResetAndStart(deviceMask)
+        if reset == 0:
+            print("reset successfully")
+
+    def flmGetVersion(self):
+        versionStr = "\0"*50
+        #versionStr = ctypes.c_char_p()
+        self.qccLib.flmGetVersion(ctypes.c_char_p(versionStr)) 
+        return versionStr
+        #print versionStr
+
+
+    def flmEraseSpawn(self,deviceMaskNumber):
+        number = 0
+        for i in range(deviceMaskNumber):
+            add = 0x01 << i
+            number = add + number
+        deviceMask = ctypes.wintypes.DWORD(number)
+        EraseState = self.qccLib.flmEraseSpawn(deviceMask)
+        if EraseState == 0:
+            print "Erase Spawn Successfully"
+        return EraseState
+
+    def flmEraseBlock(self,deviceMaskNumber):
+        number = 0
+        for i in range(deviceMaskNumber):
+            add = 0x01 << i
+            number = add + number
+        deviceMask = ctypes.wintypes.DWORD(number)
+        EraseState = self.qccLib.flmEraseBlock(deviceMask)
+        if EraseState == 0:
+            print "Erase Block Successfully"
+        return EraseState
+
+    def flmSetFlashType(self,deviceMaskNumber):
+        number = 0
+        for i in range(deviceMaskNumber):
+            add = 0x01 << i
+            number = add + number
+        deviceMask = ctypes.wintypes.DWORD(number)
+        # TFL_TYPE_STANDARD  0  
+        # TFL_TYPE_SPIF  1  
+        # TFL_TYPE_SQIF  2  
+        # TFL_TYPE_MTP  3  
+        # TFL_TYPE_OTP  4  
+        # TFL_TYPE_SMEM  5  
+        # TFL_TYPE_E2  6  
+        type_value  = ctypes.wintypes.BYTE(2)
+        self.flmTypeState = self.qccLib.flmSetFlashType(deviceMask,type_value)
+        if self.flmTypeState == 0:
+            print ("flSetFlashType set sucessfully.")
+            return True
+        else:
+            return False
+            print ("flSetFlashType set failed")
+
+    def flmSetSubsysBank(self,deviceMaskNumber):
+        number = 0
+        for i in range(deviceMaskNumber):
+            add = 0x01 << i
+            number = add + number
+        deviceMask = ctypes.wintypes.DWORD(number)
+        subSys  = ctypes.wintypes.BYTE(4)
+        bank  = ctypes.wintypes.BYTE(0)
+        self.flmSetSubsysBankState = self.qccLib.flmSetSubsysBank(deviceMask,subSys,bank)
+        if self.flmSetSubsysBankState == 0:
+            print ("flmSetSubsysBank set sucessfully.")
+            return True
+        else:
+            return False
+            print ("flmSetSubsysBank set failed")
+
+#-----------------------------------------------------------------
+    def flInit(self):
+        port  = ctypes.wintypes.DWORD(0)
+        xtal = ctypes.wintypes.DWORD(26)
+        delays = ctypes.wintypes.DWORD(2)
+        transport = ctypes.wintypes.DWORD(2)
+        flInitState = self.qccLib.flInit(port,xtal,delays,transport)
+        if flInitState == 0 :
+            print ("FlInit Successfully")
+
+
+
+    def flReadProgramFiles(self,filename):
+        fn = ctypes.c_char_p(filename)
+        ResdFilesState = self.qccLib.flReadProgramFiles(fn)
+        if ResdFilesState == 0:
+            print ("Read file sccessfully.")
+            return True
+        else:
+            self.flClose()
+            print ("Cannot read file successfully")
+            return False
+
+
+
+
+    def flProgramSpawn(self):
+        flprogramspawnState = self.qccLib.flProgramSpawn()
+        if flprogramspawnState == 0:
+            print("flProgramSpawn successfully")
+        else:
+            self.flClose()
+
+    def flGetProgress(self):
+        number = self.qccLib.flGetProgress()
+        return number
+
+    def flClose(self):
+        self.qccLib.flClose()
+
+    def flGetLastError(self):
+        ErrorState = self.qccLib.flGetLastError()
+        return ErrorState
+
+
+    def flGetAvailablePorts(self):
+        bufSize = struct.pack('<H', 500)
+        portsBuf = "\0" * 500  #reserve a buffer size of 100 characters
+        transBuf = "\0" * 500
+        numPortFound = struct.pack('<H', 0)
+
+        self.flGetAvailablePortsStatus = self.qccLib.flGetAvailablePorts(ctypes.c_char_p(bufSize),ctypes.c_char_p(portsBuf),ctypes.c_char_p(transBuf),ctypes.c_char_p(numPortFound))
+        if self.flGetAvailablePortsStatus == 0:
+
+            return portsBuf,transBuf,struct.unpack('<H', numPortFound)[0]
+        else:
+            print ("flGetAvailablePortsStatus error ")
+            print self.flGetAvailablePortsStatus
+
+            return(" "," ",0)
+
+
+#-----------------------------------------------------------------------------------
+
+
+
+if __name__ == "__main__":
+    success = True
+    qccflashlib = QCCFlashSPIDevice()
+
+    #filename = "c:"+"\""+"Users"+"\""+"Jaden"+"\""+"Desktop"+"\""+"BAT_MOBILE_RC2"+"\""+"LR_Receiver_20170323.xpv"
+    filename = r"C:\Users\Jaden\Desktop\QCC_Blue_Tools\hanpin_qc356fna_rc15_20211122_16MBit(InternalTestOnly).xuv"
+
+    (portsBuf,transBuf,numPortFound) = qccflashlib.flGetAvailablePorts()
+
+    numPortFound = int(numPortFound)
+    DeviceList = portsBuf.split(",")
+    #Remove drivers that are not "USB SPI"
+    # NotUsbNumber = 0
+    # for i in range(numPortFound):
+    #     if (DeviceList[i])[1:7] != "USBDGB":
+    #         NotUsbNumber +=1
+    #         print (DeviceList[i])
+    #         del DeviceList[i]
+    # devicenumber= numPortFound - NotUsbNumber
+    devicenumber = numPortFound
+
+    print(numPortFound)
+    for i in range(numPortFound):
+        print(DeviceList[i][8:11])
+
+    # qccflashlib.flInit()
+    # qccflashlib.flReadProgramFiles(filename)
+    # qccflashlib.flProgramSpawn()
+    # Progress = qccflashlib.flGetProgress()
+    # print Progress
+    # while Progress < 100:
+    #     Progress = qccflashlib.flGetProgress()
+    #     print Progress
+    #     time.sleep(1)
+    # error = qccflashlib.flGetLastError()
+    # if error ==0:
+    #     print("program successfully")
+    # else:
+    #     print error
+
+
+
+
+    if(qccflashlib.flmOpen(devicenumber) == False):
+
+        print("flmOpem fail")
+    else:
+        print("flmOpem successfully")
+
+        if(qccflashlib.flmReadProgramFiles(filename) == True):
+            print("flmReadProgramFiles successfully")
+        else:
+            print("flmReadProgramFiles faild")
+            success = False
+
+        if(qccflashlib.flmSetFlashType(devicenumber) == True):
+            print("flSetFlashType Successfully")
+        else:
+            print("flSetFlashType faild")
+            success = False
+
+        if(qccflashlib.flmSetSubsysBank(devicenumber) == True):
+            print("flmSetSubsysBank Successfully")
+        else:
+            print("flmSetSubsysBank faild")
+            success = False
+
+        if(qccflashlib.flmProgramSpawn(devicenumber) == True):
+            print("flmProgramSpawn Successfully")
+        else:
+            print("flmProgramSpawn faild")
+            success = False
+
+        if success :
+            for i in range(devicenumber):
+                names = locals()
+                names['Progress%s' % i] = qccflashlib.flmGetDeviceProgress(i)
+                print ("Progress%d = %s"%(i,names['Progress%s' % i] ))
+
+
+            while Progress0+Progress1+Progress2+Progress3+Progress4+Progress5+Progress6 < 700 :
+                for i in range(devicenumber):
+                    names = locals()
+                    names['Progress%s' % i] = qccflashlib.flmGetDeviceProgress(i)
+                    print ("Progress%d = %s"%(i,names['Progress%s' % i] ))
+
+                time.sleep(1)
+
+            # Error = qccflashlib.flmGetLastError()
+
+
+            for i in range(devicenumber):
+
+                Error = qccflashlib.flmGetDeviceError(i)
+                if Error ==0 :
+                    print "Program successfully"
+                else:
+                    print (str(i)+": Read Error Return:"+str(Error))
+
+            qccflashlib.flmClose(devicenumber)
+
+        else:
+            print "All Program fail"
+            qccflashlib.flmClose(devicenumber)
+
+
+
+
+
