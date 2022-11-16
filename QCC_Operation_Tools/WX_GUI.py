@@ -320,13 +320,12 @@ class MyFrame1 ( wx.Frame ):
 							# self.teShow.SetFont( wx.Font( 10, 70, 90, 90, False, wx.EmptyString ) )
 							# self.teShow.SetForegroundColour('blue')
 							self.teShow.SetLabel('Download completed.\nError Number:'+str(ListError))
+							self.DeviceErrorsNumber = 0 
+							self.working = 0
 						else:
 							# self.teShow.SetFont( wx.Font( 25, 70, 90, 90, False, wx.EmptyString ) )
 							# self.teShow.SetForegroundColour('green')
 							self.teShow.SetLabel("Download all passed. Spend time = "+str(alltime))
-
-
-
 							self.DeviceErrorsNumber = 0 
 							self.working = 0
 
@@ -370,7 +369,7 @@ class MyFrame1 ( wx.Frame ):
 					# logger.info("%s,%s,%s,\"%s\"", module, g.station, g.serial, msg)
 
 				except:
-					msg = u'Faild Read Address and LicenseKey'
+					msg = u'Faild Read Address'
 					self.teShow.SetLabel((msg))
 					# logger.info("%s,%s,%s,\"%s\"", module, g.station, g.serial, msg) 
 					# return [0, msg]   

@@ -1,6 +1,0 @@
-﻿v0.0.1
-- Initial version
-
-v0.02
-- The current folder was selected to load TestEngine.dll
-- The files in the QCC_BT folder are updated to: 3.3.12
